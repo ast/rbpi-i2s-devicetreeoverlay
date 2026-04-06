@@ -1,6 +1,17 @@
 /dts-v1/;
 /plugin/;
 
+/*
+ * I2S overlay for Raspberry Pi 1 / Zero (BCM2835).
+ *
+ * The BCM2835 I2S peripheral does not support TDM — the WS clock always
+ * has a 50:50 duty cycle with no arbitrary slot positioning. The
+ * dai-tdm-slot-* properties must be omitted or the driver will reject
+ * them on kernels >= 6.5 (see raspberrypi/linux#6568).
+ *
+ * Frame format and bit depth are set at runtime by the application.
+ */
+
 / {
     compatible = "brcm,bcm2835"; /* base compatible — matches all Pi models */
 
@@ -46,14 +57,11 @@
 
             playback_link: simple-audio-card,dai-link@0 {
                 format = "i2s";
-                /* Codec is the bit-clock and frame-clock master */
                 bitclock-master = <&p_codec_dai>;
                 frame-master = <&p_codec_dai>;
 
                 p_cpu_dai: cpu {
                     sound-dai = <&i2s>;
-                    dai-tdm-slot-num = <2>;    /* slots per frame (2 = stereo / I+Q) */
-                    dai-tdm-slot-width = <32>; /* bits per slot */
                 };
 
                 p_codec_dai: codec {
@@ -68,8 +76,6 @@
 
                 c_cpu_dai: cpu {
                     sound-dai = <&i2s>;
-                    dai-tdm-slot-num = <2>;    /* slots per frame (2 = stereo / I+Q) */
-                    dai-tdm-slot-width = <32>; /* bits per slot */
                 };
 
                 c_codec_dai: codec {

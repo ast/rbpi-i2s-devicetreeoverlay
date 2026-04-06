@@ -4,10 +4,23 @@ Device tree overlay that exposes the Raspberry Pi I2S peripheral as a full-duple
 
 Typical use case is streaming IQ samples to/from an external DAC/ADC connected to a ham radio transceiver, but it works for any I2S device (microphone ADCs, audio DACs, etc.).
 
+## Overlays
+
+| File | Target hardware |
+|------|----------------|
+| `rbpi-i2s.dts` | Pi 2/3/4/5 (BCM2711/RP1) — includes TDM slot configuration |
+| `rbpi-i2s-no-tdm.dts` | Pi 1/Zero (BCM2835) — no TDM, see [raspberrypi/linux#6568](https://github.com/raspberrypi/linux/issues/6568) |
+
 ## Build
 
 ```
 dtc -@ -W no-unit_address_vs_reg -I dts -O dtb -o rbpi-i2s.dtbo rbpi-i2s.dts
+```
+
+For Pi 1/Zero:
+
+```
+dtc -@ -W no-unit_address_vs_reg -I dts -O dtb -o rbpi-i2s.dtbo rbpi-i2s-no-tdm.dts
 ```
 
 ## Install
