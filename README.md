@@ -1,48 +1,31 @@
 # rbpi-i2s-devicetreeoverlay
 
-Most (all?) versions of the Raspberry Pi have an I2S digital audio interface. This is however not possible to enable easily by raspi-config or similar tools. Instead one has to make a "Device Tree Overlay" file.
+Device tree overlay that exposes the Raspberry Pi I2S peripheral as a full-duplex ALSA sound card (playback + capture). Uses `linux,spdif-dit` and `linux,spdif-dir` as dummy codec drivers so no external codec kernel module is needed — the I2S bus is driven directly by userspace via ALSA.
 
-The overlay uses the `linux,spdif-dit` dummy codec driver so that the I2S interface appears as a regular ALSA playback device — no external codec driver is required.
+Typical use case is streaming IQ samples to/from an external DAC/ADC connected to a ham radio transceiver, but it works for any I2S device (microphone ADCs, audio DACs, etc.).
 
 ## Build
 
-Compile the dts file with:
-
 ```
-dtc -@ -I dts -O dtb -o rbpi-i2s.dtbo rbpi-i2s.dts
+dtc -@ -W no-unit_address_vs_reg -I dts -O dtb -o rbpi-i2s.dtbo rbpi-i2s.dts
 ```
 
 ## Install
-
-Copy the compiled overlay into the overlays directory:
 
 ```
 sudo cp rbpi-i2s.dtbo /boot/firmware/overlays/
 ```
 
-Then edit `/boot/firmware/config.txt` and add:
-
-```
-dtoverlay=rbpi-i2s
-```
-
-Also make sure the following line is present and not commented out:
+Add to `/boot/firmware/config.txt`:
 
 ```
 dtparam=i2s=on
+dtoverlay=rbpi-i2s
 ```
 
-If desirable, the built-in PWM audio interface can be disabled by commenting out:
-
-```
-#dtparam=audio=on
-```
-
-After reboot, the I2S interface should be visible when typing `aplay -l` or `aplay -L`.
+After reboot, verify with `aplay -l` and `arecord -l` — the device should appear as `rbpi-i2s`.
 
 ## Testing without reboot
-
-The overlay can be loaded at runtime without rebooting:
 
 ```
 sudo dtoverlay rbpi-i2s

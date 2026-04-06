@@ -5,7 +5,7 @@ Device tree overlay for enabling the I2S audio interface on Raspberry Pi. Uses t
 ## Build
 
 ```
-dtc -@ -I dts -O dtb -o rbpi-i2s.dtbo rbpi-i2s.dts
+dtc -@ -W no-unit_address_vs_reg -I dts -O dtb -o rbpi-i2s.dtbo rbpi-i2s.dts
 ```
 
 `dtc` (device tree compiler) is typically available on the Raspberry Pi itself (`/usr/bin/dtc`), not on the development host.

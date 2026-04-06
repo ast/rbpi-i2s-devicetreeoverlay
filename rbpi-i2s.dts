@@ -13,7 +13,12 @@
         };
     };
 
-    /* Dummy codec — stands in for an external DAC that needs no driver */
+    /*
+     * Dummy codecs for TX (spdif-dit) and RX (spdif-dir).
+     * These satisfy the ALSA framework's requirement for a codec node
+     * without loading a real codec driver — the actual DAC/ADC on the
+     * I2S bus is managed entirely from userspace.
+     */
     fragment@1 {
         target-path = "/";
         __overlay__ {
@@ -22,10 +27,16 @@
                 #sound-dai-cells = <0>;
                 status = "okay";
             };
+
+            codec_in: spdif-receiver {
+                compatible = "linux,spdif-dir";
+                #sound-dai-cells = <0>;
+                status = "okay";
+            };
         };
     };
 
-    /* Wire up I2S and the dummy codec into an ALSA sound card */
+    /* Full-duplex ALSA sound card: playback (DAC) + capture (ADC) over I2S */
     fragment@2 {
         target = <&sound>;
         __overlay__ {
@@ -33,7 +44,7 @@
             simple-audio-card,name = "rbpi-i2s";
             status = "okay";
 
-            playback_link: simple-audio-card,dai-link@1 {
+            playback_link: simple-audio-card,dai-link@0 {
                 format = "i2s";
                 /* Codec is the bit-clock and frame-clock master */
                 bitclock-master = <&p_codec_dai>;
@@ -41,12 +52,28 @@
 
                 p_cpu_dai: cpu {
                     sound-dai = <&i2s>;
-                    dai-tdm-slot-num = <2>;
-                    dai-tdm-slot-width = <32>;
+                    dai-tdm-slot-num = <2>;    /* slots per frame (2 = stereo / I+Q) */
+                    dai-tdm-slot-width = <32>; /* bits per slot */
                 };
 
                 p_codec_dai: codec {
                     sound-dai = <&codec_out>;
+                };
+            };
+
+            capture_link: simple-audio-card,dai-link@1 {
+                format = "i2s";
+                bitclock-master = <&c_codec_dai>;
+                frame-master = <&c_codec_dai>;
+
+                c_cpu_dai: cpu {
+                    sound-dai = <&i2s>;
+                    dai-tdm-slot-num = <2>;    /* slots per frame (2 = stereo / I+Q) */
+                    dai-tdm-slot-width = <32>; /* bits per slot */
+                };
+
+                c_codec_dai: codec {
+                    sound-dai = <&codec_in>;
                 };
             };
         };
